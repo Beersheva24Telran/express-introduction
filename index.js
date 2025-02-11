@@ -1,5 +1,7 @@
 import express from "express";
 import Joi from "joi";
+import morgan from 'morgan'
+import fs from 'node:fs'
 const schemaPost = Joi.object({
   id: Joi.string()
     .alphanum()
@@ -40,9 +42,21 @@ function validator(schema) {
     return (req, res, next) =>{
         const {error} = schema.validate(req.body, {abortEarly: false});
         if(error) {
-            throw createError(400, error.details.map(d => d.message).join[";"])
+            throw createError(400, error.details.map(d => d.message).join(";"))
         }
-        next(req, res);
+        next();
+    }
+}
+function expressValidator(schemasObj) {
+    return (req, res, next) => {
+        if(req._body) {
+            const {error} = schemasObj[req.method].validate(req.body, {abortEarly: false});
+            if(error) {
+                req.errorMessage = error.details.map(d => d.message).join(";");
+            }
+            req.validated = true;
+        }
+        next();
     }
 }
 function createError(status, message) {
@@ -54,12 +68,24 @@ function errorHandler(error, req, res, next) {
     message = message ?? "internal server error " + error
     res.status(status).send(message);
 }
+function valid(req, res, next) {
+    if(!req.validated) {
+        throw createError(500, "server has not validated request")
+    }
+    if(req.errorMessage) {
+        throw createError(400, req.errorMessage)
+    }
+    next();
+}
+const logStream = fs.createWriteStream('log.txt')
 app.use(express.json());
-app.post("/api/v1/courses", validator(schemaPost),(req, res) => {
-  const { error } = schemaPost.validate(req.body, {abortEarly: false});
-  if (error) {
-   throw createError(400, error.details.map(d => d.message).join(";"));
-  }
+app.use(morgan('combined', {
+    stream: logStream
+}));
+
+app.use(expressValidator({"POST": schemaPost, "PUT": schemaPut}));
+app.post("/api/v1/courses",validator(schemaPost), (req, res) => {
+    
     const id = req.body.id;
     if(courses[id]) {
         throw createError(400, `course with id ${id} already exists`)
@@ -73,17 +99,14 @@ app.get("/api/v1/courses/:id", (req, res) => {
     notFound(req.params.id);
   res.send(courses[req.params.id]);
 });
-app.delete("/api/v1/courses/:id", (req, res) => {
+app.delete("/api/v1/courses/:id",valid, (req, res) => {
     notFound(req.params.id)
   delete courses[req.params.id];
   console.log(courses);
   res.send("deleted");
 });
-app.put("/api/v1/courses/:id",validator(schemaPut), (req, res) => {
-    const { error } = schemaPut.validate(req.body, {abortEarly: false});
-  if (error) {
-   throw createError(400, error.details.map(d => d.message).join(";"));
-  }
+app.put("/api/v1/courses/:id",valid, (req, res) => {
+   
   const id = req.params.id;
   notFound(id)
   courses[id] = { ...courses[id], ...req.body };
