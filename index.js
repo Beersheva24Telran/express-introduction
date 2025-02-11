@@ -36,29 +36,56 @@ const courses = {
 };
 const app = express();
 const port = process.env.PORT || 3500;
+function validator(schema) {
+    return (req, res, next) =>{
+        const {error} = schema.validate(req.body, {abortEarly: false});
+        if(error) {
+            throw createError(400, error.details.map(d => d.message).join[";"])
+        }
+        next(req, res);
+    }
+}
+function createError(status, message) {
+    return {status, message};
+}
+function errorHandler(error, req, res, next) {
+    let {status, message} = error;
+    status = status ?? 500;
+    message = message ?? "internal server error " + error
+    res.status(status).send(message);
+}
 app.use(express.json());
-app.post("/api/v1/courses", (req, res) => {
-    
+app.post("/api/v1/courses", validator(schemaPost),(req, res) => {
   const { error } = schemaPost.validate(req.body, {abortEarly: false});
   if (error) {
-    res.status(400).send(error.details.map(d => d.message).join(";"));
-  } else {
+   throw createError(400, error.details.map(d => d.message).join(";"));
+  }
     const id = req.body.id;
+    if(courses[id]) {
+        throw createError(400, `course with id ${id} already exists`)
+    }
     courses[id] = req.body;
     console.log(courses);
     res.status(201).send(courses[id]);
-  }
 });
 app.get("/api/v1/courses/:id", (req, res) => {
+
+    notFound(req.params.id);
   res.send(courses[req.params.id]);
 });
 app.delete("/api/v1/courses/:id", (req, res) => {
+    notFound(req.params.id)
   delete courses[req.params.id];
   console.log(courses);
   res.send("deleted");
 });
-app.put("/api/v1/courses/:id", (req, res) => {
+app.put("/api/v1/courses/:id",validator(schemaPut), (req, res) => {
+    const { error } = schemaPut.validate(req.body, {abortEarly: false});
+  if (error) {
+   throw createError(400, error.details.map(d => d.message).join(";"));
+  }
   const id = req.params.id;
+  notFound(id)
   courses[id] = { ...courses[id], ...req.body };
   res.send(courses[id]);
 });
@@ -73,4 +100,12 @@ app.get("/api/v1/courses", (req, res) => {
     )
   );
 });
+
 app.listen(port, () => console.log(`server is listening on port ${port}`));
+app.use(errorHandler);
+function notFound(id) {
+    if (!courses[id]) {
+        throw createError(404, `course with id ${id} doesn't exist`);
+    }
+}
+
