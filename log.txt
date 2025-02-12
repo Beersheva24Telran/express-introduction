@@ -1,1 +1,0 @@
-::1 - - [11/Feb/2025:16:55:39 +0000] "POST /api/v1/courses HTTP/1.1" 201 62 "-" "PostmanRuntime/7.43.0"
