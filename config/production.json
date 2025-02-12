@@ -1,6 +1,6 @@
 {
     "morgan": {
-        "type": "tiny",
-        "stream":"log.txt"
+        "type": "combined",
+        "stream":"./logs/log.txt"
     }
 }

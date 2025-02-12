@@ -3,6 +3,7 @@
     "config": "^3.3.12",
     "express": "^4.21.2",
     "joi": "^17.13.3",
+    "joi-password": "^4.2.0",
     "morgan": "^1.10.0"
   },
   "name": "express",
