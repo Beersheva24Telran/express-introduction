@@ -31,4 +31,5 @@ export function auth(req, res, next) {
   if (!req.user) {
     throw createError(401, "");
   }
+  next();
 }
