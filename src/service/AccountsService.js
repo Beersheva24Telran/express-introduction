@@ -1,6 +1,7 @@
 import config from 'config';
 import bcrypt from 'bcrypt'
-import { createError } from '../errors/errors';
+import { createError } from '../errors/errors.js';
+import JwtUtils from '../security/JwtUtils.js';
 const userRole = config.get("accounting.user_role");
 const adminRole = config.get("accounting.admin_role");
 const time_units = {
@@ -29,7 +30,7 @@ class AccountsService {
     }
 
     updateAccount(account) {
-        const serviceAccount = getAccount(account.email);
+        const serviceAccount = this.getAccount(account.email);
         this.#updatePassword(serviceAccount, account.password);
     }
     getAccount(username){
@@ -40,7 +41,13 @@ class AccountsService {
         return serviceAccount;
     }
     login(account) {
-        //TODO
+       const {email, password} = account;
+       const serviceAccount = this.getAccount(email);
+       if(this.#checkLogin(serviceAccount, passowrd)) {
+        throw createError(400, 'wrong credentials')
+       }
+       return JwtUtils.getJwt(this.#accounts[email])
+       
     }
     delete(username) {
         this.getAccount(username);
@@ -59,12 +66,27 @@ class AccountsService {
         }
         serviceAccount.hashPassword = bcrypt.hashSync(newPassword, config.get("accounting.salt_rounds"))
     }
+    #checkLogin(serviceAccount, password){
+        let message = "Wrong credintials";
+        if(serviceAccount) {
+            if(new Date().getTime() > serviceAccount.expiration) {
+                message = "Account's password is expired";
+            } else {
+                if(bcrypt.compareSync(password, serviceAccount.hashPassword)) {
+                    message = "";
+                }
+            }
+        }
+        return message;
+    }
 
 }
 function getExpiration() {
     const expiredInStr = config.get("accounting.expiredIn");
     const amount = expiredInStr.split(/\D/)[0];
-    const unit = expiredInStr.split(/\d/)[1];
+    const parseArray = expiredInStr.split(/\d/);
+    const index = parseArray.findIndex(e => !!e.trim())
+    const unit = parseArray[index];
     const unitValue = time_units[unit];
     if(!unitValue){
         throw createError(500, `Wrong configuration: unit ${unit} doesn't exist`);
@@ -72,3 +94,5 @@ function getExpiration() {
     return new Date().getTime() + amount * unitValue;
 
 }
+const accountingService = new AccountsService();
+export default accountingService;

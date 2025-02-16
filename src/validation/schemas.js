@@ -28,7 +28,10 @@ export const schemaPut = Joi.object({
   lecturer: Joi.string().valid("Vasya", "Olya", "Vova"),
   hours: Joi.number().integer().min(100).max(600),
 });
-export const schemaUser = Joi.string().email().required();
+const schemaUser = Joi.string().email().required();
+export const schemaGetAccount = Joi.object({
+  email: schemaUser
+})
 const passwordSchema = joiPassword
   .string()
   .min(8)

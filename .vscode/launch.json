@@ -12,9 +12,7 @@
                 "<node_internals>/**"
             ],
             "program": "${workspaceFolder}\\src\\controller\\index.js",
-            "env": {
-                "NODE_ENV":"production"
-            }
+           "envFile": "${workspaceFolder}/.env"
         }
     ]
 }
