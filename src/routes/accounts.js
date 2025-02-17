@@ -4,7 +4,7 @@ import { schemaAccount, schemaGetAccount } from '../validation/schemas.js';
 import accountingService from '../service/AccountsService.js';
 import { authenticate, auth } from '../middleware/auth.js';
 const accountsRoute = express.Router();
-accountsRoute.use(authenticate());
+
 accountsRoute.post("/admin", validator(schemaAccount), (req, res) => {
     accountingService.addAdminAccount(req.body);
     res.status(201).send("account added")
@@ -17,7 +17,7 @@ accountsRoute.put("/", validator(schemaAccount), (req, res) => {
     accountingService.updateAccount(req.body);
     res.send("account updated")
 })
-accountsRoute.get("/", auth, validator(schemaGetAccount),(req, res) => {
+accountsRoute.get("/",  validator(schemaGetAccount),(req, res) => {
    const account =  accountingService.getAccount(req.body.email); 
    res.send(account);
 });

@@ -1,6 +1,6 @@
 import express from "express";
 import { schemaPost, schemaPut } from "../validation/schemas.js";
-
+import { authenticate } from "../middleware/auth.js";
 import { errorHandler } from "../errors/errors.js";
 import { expressValidator } from "../middleware/validation.js";
 import coursesRoute from "../routes/courses.js";
@@ -16,7 +16,7 @@ const port = process.env.PORT || 3500;
 app.use(express.json());
 app.use(logger);
 
-
+app.use(authenticate());
 app.use('/api/v1/courses', coursesRoute)
 app.use('/accounts', accountsRoute)
 app.use((req, res) => {

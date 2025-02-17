@@ -2,7 +2,10 @@ import express from 'express'
 import { valid, validator, expressValidator } from '../middleware/validation.js';
 import { schemaPost,schemaPut } from '../validation/schemas.js';
 import service from '../service/CoursesService.js';
+import coursesPathes from '../paths/coursesPathes.js';
+import { auth } from '../middleware/auth.js';
 const coursesRoute = express.Router();
+coursesRoute.use(auth(coursesPathes))
 coursesRoute.use(expressValidator({ POST: schemaPost, PUT: schemaPut }));
 coursesRoute.post("/", validator(schemaPost), (req, res) => {
   const course = service.addCourse(req.body);

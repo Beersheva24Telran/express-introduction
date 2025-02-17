@@ -43,9 +43,20 @@ function basicAuthentication(req, authHeader) {
   }
 
 }
-export function auth(req, res, next) {
-  if (!req.user) {
-    throw createError(401, "");
+export function auth(paths) {
+  return (req, res, next)=> {
+    const {authentication, authorization} = paths[req.method]
+    if(!authorization) {
+      throw createError(500, "security configuration not provided")
+    };
+    if(authentication(req)) {
+      if(req.authType !== authentication(req)){
+        throw createError(401, "no required authentication");
+      }
+      if(!authorization(req)) {
+        throw createError(403, "")
+      }
+    }
+    next();
   }
-  next();
 }
