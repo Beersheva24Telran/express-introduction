@@ -43,7 +43,7 @@ class AccountsService {
   login(account) {
     const { email, password } = account;
     const serviceAccount = this.#accounts[email];
-    this.#checkLogin(serviceAccount, password);
+    this.checkLogin(serviceAccount, password);
     return JwtUtils.getJwt(this.#accounts[email]);
   }
   delete(username) {
@@ -77,7 +77,7 @@ class AccountsService {
     );
     serviceAccount.expiration = getExpiration();
   }
-  #checkLogin(serviceAccount, password) {
+ checkLogin(serviceAccount, password) {
     if (
       !serviceAccount ||
       !bcrypt.compareSync(password, serviceAccount.hashPassword)
