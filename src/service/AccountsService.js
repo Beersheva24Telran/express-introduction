@@ -35,7 +35,7 @@ class AccountsService {
     this.#addAccount(account, userRole);
   }
   #addAccount(account, role) {
-    if (this.#accounts[account.email]) {
+    if (this.#accounts[account.email] || account.email == process.env.ADMIN_USERNAME) {
       throw createError(409, `account ${account.email} already exists`);
     }
     const serviceAccount = this.#toServiceAccount(account, role);

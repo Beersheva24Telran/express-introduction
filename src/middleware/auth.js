@@ -24,39 +24,48 @@ function jwtAuthentication(req, authHeader) {
     const payload = JwtUtils.verifyJwt(token);
     req.user = payload.sub;
     req.role = payload.role;
-    req.authType = "jwt"
+    req.authType = "jwt";
   } catch (error) {}
 }
 function basicAuthentication(req, authHeader) {
   const userNamePassword64 = authHeader.substring(BASIC.length); //username:password
-  const userNamePassword = Buffer.from(userNamePassword64, 'base64').toString('utf-8');
-  const usernamePasswordArr = userNamePassword.split(":");
-  
-  try {
-    const serviceAccount = accountingService.getAccount(usernamePasswordArr[0]);
-    accountingService.checkLogin(serviceAccount, usernamePasswordArr[1]);
-    req.user = usernamePasswordArr[0];
-    req.role = serviceAccount.role;
-    req.authType = "basic";
-  } catch (error) {
-    
-  }
+  const userNamePassword = Buffer.from(userNamePassword64, "base64").toString(
+    "utf-8"
+  );
+  const userNamePasswordArr = userNamePassword.split(":");
 
+  try {
+    if (userNamePasswordArr[0] === process.env.ADMIN_USERNAME) {
+      if (userNamePasswordArr[1] === process.env.ADMIN_PASSWORD) {
+        req.user = process.env.ADMIN_USERNAME;
+        req.role = "";
+        req.authType = "basic";
+      }
+    } else {
+      const serviceAccount = accountingService.getAccount(
+        userNamePasswordArr[0]
+      );
+      accountingService.checkLogin(serviceAccount, userNamePasswordArr[1]);
+      req.user = userNamePasswordArr[0];
+      req.role = serviceAccount.role;
+      req.authType = "basic";
+    }
+  } catch (error) {}
 }
 export function auth(paths) {
-  return (req, res, next)=> {
-    const {authentication, authorization} = paths[req.method]
-    if(!authorization) {
-      throw createError(500, "security configuration not provided")
-    };
-    if(authentication(req)) {
-      if(req.authType !== authentication(req)){
+  return (req, res, next) => {
+    const { authentication, authorization } = paths[req.method];
+    if (!authorization) {
+      throw createError(500, "security configuration not provided");
+    }
+    if (authentication(req)) {
+      if (req.authType !== authentication(req)) {
         throw createError(401, "no required authentication");
       }
-      if(!authorization(req)) {
-        throw createError(403, "")
+      if (!authorization(req)) {
+        throw createError(403, "");
       }
     }
     next();
-  }
+  };
 }
