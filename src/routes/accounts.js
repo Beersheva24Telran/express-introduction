@@ -1,4 +1,5 @@
 import express from 'express';
+import asyncHandler from "express-async-handler"
 import { validator } from '../middleware/validation.js';
 import { schemaAccount, schemaGetAccount } from '../validation/schemas.js';
 import accountingService from '../service/AccountsService.js';
@@ -23,10 +24,10 @@ accountsRoute.get("/",  validator(schemaGetAccount),(req, res) => {
    const account =  accountingService.getAccount(req.body.email); 
    res.send(account);
 });
-accountsRoute.post("/login",  (req, res) => {
-    const token = accountingService.login(req.body);
+accountsRoute.post("/login",  asyncHandler(async (req, res) => {
+    const token = await accountingService.login(req.body);
     res.send(token);
-})
+}))
 accountsRoute.delete("/",validator(schemaGetAccount), (req,res) => {
     accountingService.delete(req.body.email);
     res.send("deleted")

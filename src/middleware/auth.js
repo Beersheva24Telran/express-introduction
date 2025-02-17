@@ -4,14 +4,14 @@ import accountingService from "../service/AccountsService.js";
 
 const BEARER = "Bearer ";
 const BASIC = "Basic ";
-export function authenticate(paths) {
-  return (req, res, next) => {
+export function authenticate() {
+  return async (req, res, next) => {
     const authHeader = req.header("Authorization");
     if (authHeader) {
       if (authHeader.startsWith(BEARER)) {
         jwtAuthentication(req, authHeader);
       } else if (authHeader.startsWith(BASIC)) {
-        basicAuthentication(req, authHeader);
+        await basicAuthentication(req, authHeader);
       }
     }
 
@@ -27,7 +27,7 @@ function jwtAuthentication(req, authHeader) {
     req.authType = "jwt";
   } catch (error) {}
 }
-function basicAuthentication(req, authHeader) {
+async function basicAuthentication(req, authHeader) {
   const userNamePassword64 = authHeader.substring(BASIC.length); //username:password
   const userNamePassword = Buffer.from(userNamePassword64, "base64").toString(
     "utf-8"
@@ -45,7 +45,7 @@ function basicAuthentication(req, authHeader) {
       const serviceAccount = accountingService.getAccount(
         userNamePasswordArr[0]
       );
-      accountingService.checkLogin(serviceAccount, userNamePasswordArr[1]);
+     await accountingService.checkLogin(serviceAccount, userNamePasswordArr[1]);
       req.user = userNamePasswordArr[0];
       req.role = serviceAccount.role;
       req.authType = "basic";
